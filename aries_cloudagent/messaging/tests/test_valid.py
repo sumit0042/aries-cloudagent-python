@@ -227,9 +227,17 @@ class TestValid(TestCase):
         attr_exists = "attr::some_name::marker"
         INDY_ATTR_EXISTS["validate"](attr_exists)
 
+        non_attr_exists = "attr_some_name_marker"
+        with self.assertRaises(ValidationError):
+            INDY_ATTR_EXISTS["validate"](non_attr_exists)
+
     def test_attr_value(self):
         attr_value = "attr::some_name::value"
         INDY_ATTR_VALUE["validate"](attr_value)
+
+        non_attr_value = "attr_some_name_value"
+        with self.assertRaises(ValidationError):
+            INDY_ATTR_VALUE["validate"](non_attr_value)
 
     def test_schema_id(self):
         non_schema_ids = [
