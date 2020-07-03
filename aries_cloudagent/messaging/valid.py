@@ -177,6 +177,36 @@ class IndyVersion(Regexp):
         )
 
 
+class IndyAttrExists(Regexp):
+    """Validate value against indy attribute exists specification."""
+
+    EXAMPLE = "attr::first_name::marker"
+    PATTERN = rf"^attr::.+::marker$"
+
+    def __init__(self):
+        """Initializer."""
+
+        super().__init__(
+            IndyAttrExists.PATTERN,
+            error="Value {input} is not an indy attr spec (use 'attr::<name>::marker')",
+        )
+
+
+class IndyAttrValue(Regexp):
+    """Validate value against indy attribute value specification."""
+
+    EXAMPLE = "attr::first_name::value"
+    PATTERN = rf"^attr::.+::value$"
+
+    def __init__(self):
+        """Initializer."""
+
+        super().__init__(
+            IndyAttrValue.PATTERN,
+            error="Value {input} is not an indy attr spec (use 'attr::<name>::value')",
+        )
+
+
 class IndySchemaId(Regexp):
     """Validate value against indy schema identifier specification."""
 
@@ -443,6 +473,8 @@ INDY_CRED_DEF_ID = {"validate": IndyCredDefId(), "example": IndyCredDefId.EXAMPL
 INDY_REV_REG_ID = {"validate": IndyRevRegId(), "example": IndyRevRegId.EXAMPLE}
 INDY_CRED_REV_ID = {"validate": IndyCredRevId(), "example": IndyCredRevId.EXAMPLE}
 INDY_VERSION = {"validate": IndyVersion(), "example": IndyVersion.EXAMPLE}
+INDY_ATTR_EXISTS = {"validate": IndyAttrExists(), "example": IndyAttrExists.EXAMPLE}
+INDY_ATTR_VALUE = {"validate": IndyAttrValue(), "example": IndyAttrValue.EXAMPLE}
 INDY_PREDICATE = {"validate": IndyPredicate(), "example": IndyPredicate.EXAMPLE}
 INDY_ISO8601_DATETIME = {
     "validate": IndyISO8601DateTime(),

@@ -25,6 +25,8 @@ from ....messaging.valid import (
     INDY_PREDICATE,
     INDY_SCHEMA_ID,
     INDY_VERSION,
+    INDY_ATTR_EXISTS,
+    INDY_ATTR_VALUE,
     INT_EPOCH,
     NATURAL_NUM,
     UUIDFour,
@@ -146,6 +148,12 @@ class IndyProofReqSpecRestrictionsSchema(Schema):
         required=False,
         **INDY_CRED_DEF_ID,
     )
+    attr_exists = fields.String(
+        description="Attribute exists", required=False, **INDY_ATTR_EXISTS
+    )
+    attr_value = fields.String(
+        description="Attribute value", required=False, **INDY_ATTR_VALUE
+    )
 
 
 class IndyProofReqNonRevokedSchema(Schema):
@@ -185,7 +193,12 @@ class IndyProofReqAttrSpecSchema(Schema):
     """Schema for attribute specification in indy proof request."""
 
     name = fields.String(
-        example="favouriteDrink", description="Attribute name", required=True
+        example="favouriteDrink", description="Attribute name", required=False
+    )
+    names = fields.List(
+        fields.String(),
+        example="[favouriteDrink, age]", description="Attribute name group",
+        required=False
     )
     restrictions = fields.List(
         fields.Nested(IndyProofReqSpecRestrictionsSchema()),

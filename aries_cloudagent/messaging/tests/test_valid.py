@@ -22,6 +22,8 @@ from ..valid import (
     INDY_REV_REG_ID,
     INDY_SCHEMA_ID,
     INDY_VERSION,
+    INDY_ATTR_EXISTS,
+    INDY_ATTR_VALUE,
     INDY_WQL,
     INT_EPOCH,
     NATURAL_NUM,
@@ -220,6 +222,14 @@ class TestValid(TestCase):
         INDY_VERSION["validate"](".05")
         INDY_VERSION["validate"]("1.2.3")
         INDY_VERSION["validate"]("..")  # perverse but technically OK
+
+    def test_attr_exists(self):
+        attr_exists = "attr::some_name::marker"
+        INDY_ATTR_EXISTS["validate"](attr_exists)
+
+    def test_attr_value(self):
+        attr_value = "attr::some_name::value"
+        INDY_ATTR_VALUE["validate"](attr_value)
 
     def test_schema_id(self):
         non_schema_ids = [
