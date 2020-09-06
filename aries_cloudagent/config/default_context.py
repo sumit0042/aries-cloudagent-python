@@ -79,7 +79,8 @@ class DefaultContextBuilder(ContextBuilder):
                         # "unpack_message",
                         "get_local_did",
                     ),
-                )
+                ),
+                ("wallet.name",),
             ),
         )
 
