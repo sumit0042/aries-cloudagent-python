@@ -9,7 +9,7 @@ from aiohttp_apispec import (
     response_schema,
 )
 
-from marshmallow import fields
+from marshmallow import fields, Schema
 
 from ..ledger.base import BaseLedger
 from ..ledger.endpoint_type import EndpointType
