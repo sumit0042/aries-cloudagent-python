@@ -849,6 +849,71 @@ class TransportGroup(ArgumentGroup):
         return settings
 
 
+@group(CAT_START)
+class MediationGroup(ArgumentGroup):
+    """Mediation settings."""
+
+    GROUP_NAME = "Mediation"
+
+    def add_arguments(self, parser: ArgumentParser):
+        """Add mediation command line arguments to the parser."""
+        parser.add_argument(
+            "--open-mediation",
+            action="store_true",
+            help="Enables didcomm mediation. After establishing a connection, if enabled, \
+                an agent may request message mediation, which will allow the mediator to \
+                forward messages on behalf of the recipient. See aries-rfc:0211."
+        )
+        parser.add_argument(
+            "--automate-mediation",
+            action="store_true",
+            env_var="ACAPY_AUTO_MEDIATION",
+            help="automate all steps of mediation."
+                ". Default: false.",
+        )
+        parser.add_argument(
+            "--automate-mediation-request-on-discovery",
+            action="store_true",
+            env_var="ACAPY_AUTOMATE_MEDIATION_REQUEST_ON_DISCOVERY",
+            help="When enabled, connection completion will trigger a feature discovery"
+            " request over the connection, if mediation is supported a mediation request"
+            " will be sent. Default: false.",
+        )
+        parser.add_argument(
+            "--auto-respond-mediation-grant",
+            action="store_true",
+            env_var="ACAPY_AUTO_RESPOND_MEDIATION_GRANT",
+            help="Automatically respond to mediation grant message with a keylist update"
+                "message containing a newly created did verkey for use as a recipient key"
+                ". Default: false.",
+        )
+        parser.add_argument(
+            "--auto-respond-keylist-update-response",
+            action="store_true",
+            env_var="ACAPY_AUTO_RESPOND_KEYLIST_UPDATE_RESPONSE",
+            help="Automatically create a connection invitation with the received updated"
+            " keylists. Default: false.",
+        )
+
+    def get_settings(self, args: Namespace):
+        """Extract mediation settings."""
+        settings = {}
+        settings["mediation.auto_mediation_request_on_discovery"] = True if args.auto_mediation_request_on_discovery else False
+        if args.open_mediation:
+            settings["mediation.open"] = True
+            if args.automate_mediation:
+                settings["mediation.automate_mediation"] = True
+                settings["mediation.auto_respond_mediation_grant"] = True 
+                settings["mediation.auto_respond_keylist_update_response"] = True
+            else:
+                settings["mediation.auto_respond_mediation_grant"] = True if args.auto_respond_mediation_grant else False
+                if args.auto_respond_keylist_update_response:
+                    settings["mediation.auto_respond_keylist_update_response"] = True 
+                else:
+                    settings["mediation.auto_respond_keylist_update_response"] = False
+        return settings
+
+
 @group(CAT_PROVISION, CAT_START)
 class WalletGroup(ArgumentGroup):
     """Wallet settings."""
