@@ -370,8 +370,8 @@ async def main(
             elif option == "2":
                 log_status("#20 Request proof of degree from alice")
                 req_attrs = [
-                    {"name": "name", "restrictions": [{"issuer_did": agent.did}]},
-                    {"name": "date", "restrictions": [{"issuer_did": agent.did}]},
+                    {"name": "name", "restrictions": [{"schema_name": "degree schema"}]},
+                    {"name": "date", "restrictions": [{"schema_name": "degree schema"}]},
                 ]
                 if revocation:
                     req_attrs.append(
@@ -383,7 +383,7 @@ async def main(
                     )
                 else:
                     req_attrs.append(
-                        {"name": "degree", "restrictions": [{"issuer_did": agent.did}]}
+                        {"name": "degree", "restrictions": [{"schema_name": "degree schema"}]}
                     )
                 if SELF_ATTESTED:
                     # test self-attested claims
@@ -396,7 +396,7 @@ async def main(
                         "name": "age",
                         "p_type": ">=",
                         "p_value": 18,
-                        "restrictions": [{"issuer_did": agent.did}],
+                        "restrictions": [{"schema_name": "degree schema"}],
                     }
                 ]
                 indy_proof_request = {
