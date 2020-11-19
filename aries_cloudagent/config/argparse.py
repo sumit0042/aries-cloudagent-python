@@ -872,7 +872,7 @@ class MediationGroup(ArgumentGroup):
                 ". Default: false.",
         )
         parser.add_argument(
-            "--automate-mediation-request-on-discovery",
+            "--auto-mediation-request-on-discovery",
             action="store_true",
             env_var="ACAPY_AUTOMATE_MEDIATION_REQUEST_ON_DISCOVERY",
             help="When enabled, connection completion will trigger a feature discovery"
