@@ -97,7 +97,6 @@ async def default_genesis_txns():
         LOGGER.exception("Error loading genesis transactions:")
     return genesis
 
-
 class DemoAgent:
     def __init__(
         self,
@@ -116,6 +115,7 @@ class DemoAgent:
         timing_log: str = None,
         postgres: bool = None,
         revocation: bool = False,
+        mediation: bool = False,
         extra_args=None,
         **params,
     ):
@@ -137,6 +137,7 @@ class DemoAgent:
         self.trace_target = TRACE_TARGET
         self.trace_tag = TRACE_TAG
         self.external_webhook_target = WEBHOOK_TARGET
+        self.mediation = mediation
 
         self.admin_url = f"http://{self.internal_host}:{admin_port}"
         if AGENT_ENDPOINT:
@@ -272,6 +273,15 @@ class DemoAgent:
                     ("--trace-label", self.label + ".trace"),
                 ]
             )
+
+        if self.mediation:
+            result.extend(
+                [
+                    "--open-mediation",
+                    "--automate-mediation",
+                ]
+            )
+
         if self.extra_args:
             result.extend(self.extra_args)
 
@@ -665,3 +675,57 @@ class DemoAgent:
 
     def reset_postgres_stats(self):
         self.wallet_stats.clear()
+
+
+class MediatorAgent(DemoAgent):
+    def __init__(
+        self, http_port: int,
+        admin_port: int,
+        **kwargs
+    ):
+        super().__init__(
+            "Mediator.Agent",
+            http_port,
+            admin_port,
+            prefix="Mediator",
+            mediation=True,
+            extra_args=[
+                "--auto-accept-invites",
+                "--auto-accept-requests",
+            ],
+            seed=None,
+            **kwargs,
+        )
+        self.connection_id = None
+        self._connection_ready = asyncio.Future()
+        self.cred_state = {}
+
+    async def detect_connection(self):
+        await self._connection_ready
+
+    @property
+    def connection_ready(self):
+        return self._connection_ready.done() and self._connection_ready.result()
+
+    async def handle_connections(self, message):
+        if message["connection_id"] == self.connection_id:
+            if message["state"] == "active" and not self._connection_ready.done():
+                self.log("Connected")
+                self._connection_ready.set_result(True)
+
+    async def handle_basicmessages(self, message):
+        self.log("Received message:", message["content"])
+
+
+async def start_mediator_agent(start_port, genesis):
+    mediator_agent = MediatorAgent(
+        start_port,
+        start_port + 1,
+        genesis_data=genesis,
+    )
+    await mediator_agent.listen_webhooks(start_port + 2)
+
+    log_msg("Mediator Admin URL is at:", mediator_agent.admin_url)
+    log_msg("Mediator Endpoint URL is at:", mediator_agent.endpoint)
+
+    return mediator_agent
