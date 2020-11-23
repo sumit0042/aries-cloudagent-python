@@ -27,6 +27,7 @@ LOGGER = logging.getLogger(__name__)
 class AliceAgent(DemoAgent):
     def __init__(
         self,
+        ident: str,
         http_port: int,
         admin_port: int,
         no_auto: bool = False,
