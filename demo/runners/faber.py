@@ -210,7 +210,10 @@ async def main(
             log_status(
                 "#7 Create a connection to alice and print out the invite details"
             )
-            connection = await agent.admin_POST("/connections/create-invitation")
+            if mediation:
+                connection = await agent.admin_POST("/mediation/requests/client/" + agent.mediator_request_id + "/generate-invitation")
+            else:
+                connection = await agent.admin_POST("/connections/create-invitation")
 
         agent.connection_id = connection["connection_id"]
 

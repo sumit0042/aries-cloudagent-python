@@ -139,6 +139,7 @@ class DemoAgent:
         self.external_webhook_target = WEBHOOK_TARGET
         self.mediation = mediation
         self.mediator_connection_id = None
+        self.mediator_request_id = None
 
         self.admin_url = f"http://{self.internal_host}:{admin_port}"
         if AGENT_ENDPOINT:
@@ -747,4 +748,19 @@ async def start_mediator_agent(start_port, genesis, agent):
     await mediator_agent.detect_connection()
     log_msg("Connected agent to mediator:", agent.ident, mediator_agent.ident)
 
-    return mediator_agent
+    # setup mediation on our connection
+    mediation_request = await agent.admin_POST("/mediation/requests/client/" + agent.mediator_connection_id + "/create-send")
+    agent.mediator_request_id = mediation_request["mediation_id"]
+    log_msg("Mediation request id:", agent.mediator_request_id)
+
+    count = 3
+    while 0 < count:
+        await asyncio.sleep(1.0)
+        mediation_status = await agent.admin_GET("/mediation/requests/" + agent.mediator_request_id)
+        if mediation_status["state"] == "granted":
+            log_msg("Mediation setup successfully!", mediation_status)
+            return mediator_agent
+        count = count - 1
+
+    log_msg("Mediation setup FAILED :-(")
+    raise Exception("Mediation setup FAILED :-(")
