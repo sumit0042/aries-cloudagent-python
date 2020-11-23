@@ -12,7 +12,7 @@ from aiohttp import ClientError
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa
 
-from runners.support.agent import DemoAgent, default_genesis_txns
+from runners.support.agent import DemoAgent, default_genesis_txns, start_mediator_agent
 from runners.support.utils import (
     log_msg,
     log_status,
@@ -38,6 +38,8 @@ class FaberAgent(DemoAgent):
         admin_port: int,
         no_auto: bool = False,
         tails_server_base_url: str = None,
+        multitenant: bool = False,
+        mediation: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -46,6 +48,8 @@ class FaberAgent(DemoAgent):
             admin_port,
             prefix="Faber",
             tails_server_base_url=tails_server_base_url,
+            multitenant=multitenant,
+            mediation=mediation,
             extra_args=[]
             if no_auto
             else ["--auto-accept-invites", "--auto-accept-requests"],
@@ -147,7 +151,10 @@ async def generate_invitation(agent):
         log_status(
             "#7 Create a connection to alice and print out the invite details"
         )
-        connection = await agent.admin_POST("/connections/create-invitation")
+        if agent.mediation:
+            connection = await agent.admin_POST("/mediation/requests/client/" + agent.mediator_request_id + "/generate-invitation")
+        else:
+            connection = await agent.admin_POST("/connections/create-invitation")
 
     agent.connection_id = connection["connection_id"]
 
@@ -197,6 +204,7 @@ async def main(
     tails_server_base_url: str = None,
     show_timing: bool = False,
     multitenant: bool = False,
+    mediation: bool = False,
 ):
 
     genesis = await default_genesis_txns()
@@ -217,6 +225,7 @@ async def main(
             tails_server_base_url=tails_server_base_url,
             timing=show_timing,
             multitenant=multitenant,
+            mediation=mediation,
         )
         await agent.listen_webhooks(start_port + 2)
         await agent.register_did()
@@ -230,15 +239,17 @@ async def main(
             # create an initial managed sub-wallet
             await agent.register_or_switch_wallet("Faber.initial", public_did=True)
 
+        if mediation:
+            mediator_agent = await start_mediator_agent(start_port+4, genesis, agent)
+        else:
+            mediator_agent = None
+
         # Create a schema
         credential_definition_id = await create_schema_and_cred_def(agent, revocation)
 
         # TODO add an additional credential for Student ID
 
         await generate_invitation(agent)
-
-        log_msg("Waiting for connection...")
-        await agent.detect_connection()
 
         exchange_tracing = False
         options = (
@@ -413,6 +424,8 @@ async def main(
     finally:
         terminated = True
         try:
+            if mediator_agent:
+                await mediator_agent.terminate()
             if agent:
                 await agent.terminate()
         except Exception:
@@ -440,6 +453,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--revocation", action="store_true", help="Enable credential revocation"
+    )
+    parser.add_argument(
+        "--mediation", action="store_true", help="Enable mediation functionality"
     )
 
     parser.add_argument(
@@ -505,6 +521,7 @@ if __name__ == "__main__":
                 tails_server_base_url,
                 args.timing,
                 args.multitenant,
+                args.mediation,
             )
         )
     except KeyboardInterrupt:

@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa
 
-from runners.support.agent import DemoAgent, default_genesis_txns
+from runners.support.agent import DemoAgent, default_genesis_txns, start_mediator_agent
 from runners.support.utils import (
     log_json,
     log_msg,
@@ -26,13 +26,21 @@ LOGGER = logging.getLogger(__name__)
 
 class AliceAgent(DemoAgent):
     def __init__(
-        self, ident: str, http_port: int, admin_port: int, no_auto: bool = False, **kwargs
+        self,
+        http_port: int,
+        admin_port: int,
+        no_auto: bool = False,
+        multitenant: bool = False,
+        mediation: bool = False,
+        **kwargs
     ):
         super().__init__(
             ident,
             http_port,
             admin_port,
             prefix="Alice",
+            multitenant=multitenant,
+            mediation=mediation,
             extra_args=[]
             if no_auto
             else [
@@ -218,6 +226,7 @@ async def main(
     no_auto: bool = False,
     show_timing: bool = False,
     multitenant: bool = False,
+    mediation: bool = False,
 ):
 
     genesis = await default_genesis_txns()
@@ -237,6 +246,7 @@ async def main(
             no_auto=no_auto,
             timing=show_timing,
             multitenant=multitenant,
+            mediation=mediation,
         )
         await agent.listen_webhooks(start_port + 2)
 
@@ -248,6 +258,11 @@ async def main(
         if multitenant:
             # create an initial managed sub-wallet
             await agent.register_or_switch_wallet("Alice.initial")
+
+        if mediation:
+            mediator_agent = await start_mediator_agent(start_port+4, genesis, agent)
+        else:
+            mediator_agent = None
 
         log_status("#9 Input faber.py invitation details")
         await input_invitation(agent)
@@ -294,6 +309,8 @@ async def main(
     finally:
         terminated = True
         try:
+            if mediator_agent:
+                await mediator_agent.terminate()
             if agent:
                 await agent.terminate()
         except Exception:
@@ -324,6 +341,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--multitenant", action="store_true", help="Enable multitenancy options"
+    )
+    parser.add_argument(
+        "--mediation", action="store_true", help="Enable mediation functionality"
     )
     args = parser.parse_args()
 
@@ -363,6 +383,7 @@ if __name__ == "__main__":
                 args.no_auto,
                 args.timing,
                 args.multitenant,
+                args.mediation,
             )
         )
     except KeyboardInterrupt:
