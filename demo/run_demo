@@ -27,14 +27,14 @@ do
     continue
   fi
   case $i in
-  --events)
-    if [ "${AGENT}" = "performance" ]; then
-      echo -e "\nIgnoring the \"--events\" option when running the ${AGENT} agent.\n"
-    else
-      EVENTS=1
-    fi
-    continue
-  ;;
+    --events)
+      if [ "${AGENT}" = "performance" ]; then
+        echo -e "\nIgnoring the \"--events\" option when running the ${AGENT} agent.\n"
+      else
+        EVENTS=1
+      fi
+      continue
+    ;;
     --self-attested)
       SELF_ATTESTED=1
       continue
@@ -49,6 +49,14 @@ do
       TRACE_ENABLED=1
       TRACE_TARGET=http://${TRACE_TARGET_URL}/
       TRACE_TAG=acapy.events
+      continue
+    ;;
+    --revocation)
+      # if revocation is enabled, set TAILS_NETWORK if not already set (to auto pick up tails server endpoint)
+      if [ -z "$TAILS_NETWORK" ]; then
+        TAILS_NETWORK=docker_tails-server
+      fi
+      ARGS="${ARGS:+$ARGS }$i"
       continue
     ;;
     --webhook-url)
@@ -73,33 +81,33 @@ do
       SKIP=1
       continue
     ;;
-  --timing)
-    if [ ! -d "../logs" ]; then
-      mkdir ../logs && chmod -R uga+rws ../logs
-    fi
-    if [ "$(ls -ld ../logs | grep dr..r..rwx)" == "" ]; then
-      echo "Error: To use the --timing parameter, the directory '../logs' must exist and all users must be able to write to it."
-      echo "For example, to create the directory and then set the permissions use: 'mkdir ../logs; chmod uga+rws ../logs'"
-      exit 1
-    fi
-    continue
-  ;;
-  --bg)
-    if [ "${AGENT}" = "alice" ] || [ "${AGENT}" = "faber" ] || [ "${AGENT}" = "acme" ]; then
-      DOCKER_OPTS="-d"
-      echo -e "\nRunning in ${AGENT} in the background. Note that you cannot use the command line console in this mode."
-      echo To see the logs use: \"docker logs ${AGENT}\".
-      echo While viewing logs, hit CTRL-C to return to the command line.
-      echo To stop the agent, use: \"docker stop ${AGENT}\". The docker environment will
-      echo -e "be removed on stop.\n\n"
-    else
-      echo The "bg" option \(for running docker in detached mode\) is only for agents Alice, Faber and Acme.
-      echo Ignoring...
-    fi
-    continue
-  ;;
-  --help)
-    cat <<EOF
+    --timing)
+      if [ ! -d "../logs" ]; then
+        mkdir ../logs && chmod -R uga+rws ../logs
+      fi
+      if [ "$(ls -ld ../logs | grep dr..r..rwx)" == "" ]; then
+        echo "Error: To use the --timing parameter, the directory '../logs' must exist and all users must be able to write to it."
+        echo "For example, to create the directory and then set the permissions use: 'mkdir ../logs; chmod uga+rws ../logs'"
+        exit 1
+      fi
+      continue
+    ;;
+    --bg)
+      if [ "${AGENT}" = "alice" ] || [ "${AGENT}" = "faber" ] || [ "${AGENT}" = "acme" ]; then
+        DOCKER_OPTS="-d"
+        echo -e "\nRunning in ${AGENT} in the background. Note that you cannot use the command line console in this mode."
+        echo To see the logs use: \"docker logs ${AGENT}\".
+        echo While viewing logs, hit CTRL-C to return to the command line.
+        echo To stop the agent, use: \"docker stop ${AGENT}\". The docker environment will
+        echo -e "be removed on stop.\n\n"
+      else
+        echo The "bg" option \(for running docker in detached mode\) is only for agents Alice, Faber and Acme.
+        echo Ignoring...
+      fi
+      continue
+    ;;
+    --help)
+      cat <<EOF
 
 Usage:
    ./demo_run <agent> [OPTIONS]
