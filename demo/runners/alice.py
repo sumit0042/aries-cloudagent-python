@@ -249,7 +249,7 @@ async def main(
         log_msg("Endpoint URL is at:", agent.endpoint)
 
         if mediation:
-            mediator_agent = await start_mediator_agent(start_port+4, genesis)
+            mediator_agent = await start_mediator_agent(start_port+4, genesis, agent)
         else:
             mediator_agent = None
 

@@ -138,6 +138,7 @@ class DemoAgent:
         self.trace_tag = TRACE_TAG
         self.external_webhook_target = WEBHOOK_TARGET
         self.mediation = mediation
+        self.mediator_connection_id = None
 
         self.admin_url = f"http://{self.internal_host}:{admin_port}"
         if AGENT_ENDPOINT:
@@ -366,6 +367,7 @@ class DemoAgent:
             my_env["PYTHONPATH"] = python_path
 
         agent_args = self.get_process_args(bin_path)
+        log_msg(agent_args)
 
         # start agent sub-process
         loop = asyncio.get_event_loop()
@@ -708,24 +710,41 @@ class MediatorAgent(DemoAgent):
         return self._connection_ready.done() and self._connection_ready.result()
 
     async def handle_connections(self, message):
-        if message["connection_id"] == self.connection_id:
+        if message["connection_id"] == self.mediator_connection_id:
             if message["state"] == "active" and not self._connection_ready.done():
-                self.log("Connected")
+                self.log("Mediator Connected")
                 self._connection_ready.set_result(True)
 
     async def handle_basicmessages(self, message):
         self.log("Received message:", message["content"])
 
 
-async def start_mediator_agent(start_port, genesis):
+async def start_mediator_agent(start_port, genesis, agent):
+    # start mediator agent
     mediator_agent = MediatorAgent(
         start_port,
         start_port + 1,
         genesis_data=genesis,
     )
     await mediator_agent.listen_webhooks(start_port + 2)
+    await mediator_agent.start_process()
 
     log_msg("Mediator Admin URL is at:", mediator_agent.admin_url)
     log_msg("Mediator Endpoint URL is at:", mediator_agent.endpoint)
+
+    # we need to pre-connect the agent to its mediator
+    # Generate an invitation
+    log_msg("Generate mediation invite ...")
+    mediator_connection = await mediator_agent.admin_POST("/connections/create-invitation")
+    mediator_agent.mediator_connection_id = mediator_connection["connection_id"]
+
+    # accept the invitation
+    log_msg("Accept mediation invite ...")
+    connection = await agent.admin_POST("/connections/receive-invitation", mediator_connection["invitation"])
+    agent.mediator_connection_id = connection["connection_id"]
+
+    log_msg("Await mediation connection status ...")
+    await mediator_agent.detect_connection()
+    log_msg("Connected agent to mediator:", agent.ident, mediator_agent.ident)
 
     return mediator_agent
