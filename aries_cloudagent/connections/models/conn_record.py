@@ -135,6 +135,9 @@ class ConnRecord(BaseRecord):
         my_did: str = None,
         their_did: str = None,
         their_label: str = None,
+        tx_my_role:list = [],
+        tx_their_role:list = [],
+        initiator: str = None,
         their_role: Union[str, "ConnRecord.Role"] = None,
         invitation_key: str = None,
         request_id: str = None,
@@ -147,6 +150,7 @@ class ConnRecord(BaseRecord):
         alias: str = None,
         **kwargs,
     ):
+    
         """Initialize a new ConnRecord."""
         super().__init__(
             connection_id,
@@ -164,6 +168,8 @@ class ConnRecord(BaseRecord):
             else their_role.rfc160
         )
         self.invitation_key = invitation_key
+        self.tx_my_role = tx_my_role
+        self.tx_their_role = tx_their_role
         self.request_id = request_id
         self.error_msg = error_msg
         self.inbound_connection_id = inbound_connection_id
@@ -171,6 +177,7 @@ class ConnRecord(BaseRecord):
         self.accept = accept or self.ACCEPT_MANUAL
         self.invitation_mode = invitation_mode or self.INVITATION_MODE_ONCE
         self.alias = alias
+
 
     @property
     def connection_id(self) -> str:
@@ -183,6 +190,8 @@ class ConnRecord(BaseRecord):
         return {
             prop: getattr(self, prop)
             for prop in (
+                "tx_my_role",
+                "tx_their_role",
                 "their_role",
                 "inbound_connection_id",
                 "routing_state",
@@ -381,6 +390,12 @@ class ConnRecordSchema(BaseRecordSchema):
     their_label = fields.Str(
         required=False, description="Their label for connection", example="Bob"
     )
+    tx_my_role = fields.List(
+        fields.Str(),required=False, description="A List of my transaction related roles (AUTHOR/ENDORSER)"
+    )
+    tx_their_role = fields.List(
+        fields.Str(),required=False, description="A List of their transaction related roles (AUTHOR/ENDORSER)"
+    )
     their_role = fields.Str(
         required=False,
         description="Their role in the connection protocol",
@@ -448,3 +463,4 @@ class ConnRecordSchema(BaseRecordSchema):
         description="Optional alias to apply to connection for later use",
         example="Bob, providing quotes",
     )
+

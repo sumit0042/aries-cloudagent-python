@@ -35,6 +35,7 @@ def match_post_filter(
         alt: set to match any (positive=True) value or miss all (positive=False)
             values in post_filter
     """
+
     if not post_filter:
         return True
 
@@ -335,6 +336,7 @@ class BaseRecord(BaseModel):
             log_params: Additional parameters to log
             webhook: Flag to override whether the webhook is sent
         """
+
         new_record = None
         log_reason = reason or ("Updated record" if self._id else "Created record")
         try:
@@ -344,6 +346,7 @@ class BaseRecord(BaseModel):
                 record = self.storage_record
                 await storage.update_record(record, record.value, record.tags)
                 new_record = False
+
             else:
                 self._id = str(uuid.uuid4())
                 self.created_at = self.updated_at
@@ -386,6 +389,7 @@ class BaseRecord(BaseModel):
             await self.send_webhook(
                 context, self.webhook_payload, topic=self.webhook_topic
             )
+
 
     async def delete_record(self, context: InjectionContext):
         """Remove the stored record.
