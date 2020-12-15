@@ -47,10 +47,10 @@ class InMemoryProfile(Profile):
         return InMemoryProfileSession(self, context=context)
 
     @classmethod
-    def test_profile(cls) -> "InMemoryProfile":
+    def test_profile(cls, *, settings: Mapping[str, Any] = None) -> "InMemoryProfile":
         """Used in tests to create a standard InMemoryProfile."""
         return InMemoryProfile(
-            context=InjectionContext(enforce_typing=False),
+            context=InjectionContext(settings=settings, enforce_typing=False),
             name=InMemoryProfile.TEST_PROFILE_NAME,
         )
 

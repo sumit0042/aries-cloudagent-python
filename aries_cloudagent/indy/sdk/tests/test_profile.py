@@ -1,5 +1,7 @@
 import pytest
 
+from ....config.injection_context import InjectionContext
+
 from ..profile import IndySdkProfile
 from ..wallet_setup import IndyWalletConfig, IndyOpenWallet
 from ....ledger.indy import IndySdkLedgerPool
@@ -33,4 +35,13 @@ class TestIndySdkProfile:
         assert profile.wallet.created
         assert profile.wallet.master_secret_id == "master-secret"
 
-    # FIXME needs more coverage
+    def test_read_only(self):
+        ro_profile = IndySdkProfile(
+            IndyOpenWallet(
+                config=IndyWalletConfig({"name": "test-profile"}),
+                created=True,
+                handle=1,
+                master_secret_id="master-secret",
+            ),
+            context=InjectionContext(settings={"ledger.read_only": True}),
+        )
