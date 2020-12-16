@@ -36,6 +36,8 @@ class TestIndySdkProfile:
         assert profile.wallet.master_secret_id == "master-secret"
 
     def test_read_only(self):
+        context = InjectionContext(settings={"ledger.read_only": True})
+        context.injector.bind_instance(IndySdkLedgerPool, IndySdkLedgerPool("name"))
         ro_profile = IndySdkProfile(
             IndyOpenWallet(
                 config=IndyWalletConfig({"name": "test-profile"}),
@@ -43,5 +45,5 @@ class TestIndySdkProfile:
                 handle=1,
                 master_secret_id="master-secret",
             ),
-            context=InjectionContext(settings={"ledger.read_only": True}),
+            context,
         )

@@ -95,8 +95,10 @@ class TestIndySdkStorage(test_in_memory_storage.TestInMemoryStorage):
                     }
                 ),
             }
-            fake_profile = await IndySdkProfileManager().provision(config)
-            opened = await IndySdkProfileManager().open(config)  # cover open()
+            context = InjectionContext()
+            context.injector.bind_instance(IndySdkLedgerPool, IndySdkLedgerPool("name"))
+            fake_profile = await IndySdkProfileManager().provision(context, config)
+            opened = await IndySdkProfileManager().open(context, config)  # cover open()
             await opened.close()
 
             session = await fake_profile.session()
